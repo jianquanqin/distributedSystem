@@ -2,31 +2,32 @@ package log
 
 import (
 	"io/ioutil"
-	slog "log"
+	stlog "log"
 	"net/http"
 	"os"
 )
 
-var log *slog.Logger
+var log *stlog.Logger
 
-type filelog string
+type fileLog string
 
-func (fl filelog) Write(data []byte) (int, error) {
+func (fl fileLog) Write(data []byte) (int, error) {
 
 	f, err := os.OpenFile(string(fl), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 
 	if err != nil {
 		return 0, err
 	}
+
 	defer f.Close()
-	return fl.Write(data)
+	return f.Write(data)
 }
 
 func Run(destination string) {
-	log = slog.New(filelog(destination), "go", slog.LstdFlags)
+	log = stlog.New(fileLog(destination), "go: ", stlog.LstdFlags)
 }
 
-func RegisterHandler() {
+func RegisterHandlers() {
 
 	http.HandleFunc("/log", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -44,6 +45,6 @@ func RegisterHandler() {
 	})
 }
 
-func write(msg string) {
-	log.Printf("%v\n", msg)
+func write(message string) {
+	log.Printf("%v\n", message)
 }
