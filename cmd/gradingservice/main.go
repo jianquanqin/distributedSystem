@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"go-distributed-system/grades"
 	"go-distributed-system/log"
 	"go-distributed-system/registry"
 	"go-distributed-system/service"
@@ -10,27 +11,23 @@ import (
 )
 
 func main() {
-
-	//先运行log服务
-	log.Run("distributed.log")
-
-	//接着启动服务
-	//实际业务中，如下信息应该从环境变量或者配置文件中获取
-	host, port := "127.0.0.1", "4000"
-
-	//使用公共函数启用
-	//没有ctx，就使用context.Background,它是一个非nil的空值
+	host, port := "127.0.0.1", "6000"
 	serviceAddr := fmt.Sprintf("http://%s:%s", host, port)
 	r := registry.Registration{
-		ServiceName:      registry.LogService,
+		ServiceName:      registry.GradingService,
 		ServiceURL:       serviceAddr,
-		RequiredServices: make([]registry.ServiceName, 0),
+		RequiredServices: []registry.ServiceName{registry.LogService},
 		ServiceUpdateURL: serviceAddr + "/services",
 		HeartBeatURL:     serviceAddr + "/heartbeat",
 	}
-	ctx, err := service.Start(context.Background(), host, port, r, log.RegisterHandler)
+	ctx, err := service.Start(context.Background(), host, port, r, grades.RegisterHandlers)
 	if err != nil {
 		stlog.Fatalln(err)
+	}
+
+	if logProvider, err := registry.GetProvider(registry.LogService); err == nil {
+		fmt.Printf("logging service found at: %s\n", logProvider)
+		log.SetClientLogger(logProvider, r.ServiceName)
 	}
 	//start 中使用了goroutine，会发送响应的信号
 	<-ctx.Done()

@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"distributedSystem/log"
-	"distributedSystem/portal"
-	"distributedSystem/registry"
-	"distributedSystem/service"
 	"fmt"
+	"go-distributed-system/log"
+	"go-distributed-system/portal"
+	"go-distributed-system/registry"
+	"go-distributed-system/service"
 	stlog "log"
 )
 
@@ -16,35 +16,31 @@ func main() {
 		stlog.Fatal(err)
 	}
 
-	host, port := "localhost", "5000"
-	serviceAddress := fmt.Sprintf("http://%s:%s", host, port)
+	host, port := "127.0.0.1", "5001"
+	serviceAddr := fmt.Sprintf("http://%s:%s", host, port)
+
 	r := registry.Registration{
-
 		ServiceName: registry.PortalService,
-		ServiceURL:  serviceAddress,
-
+		ServiceURL:  serviceAddr,
 		RequiredServices: []registry.ServiceName{
 			registry.LogService,
 			registry.GradingService,
 		},
-		ServiceUpdateURL: serviceAddress + "/services",
-		HeartBeatURL:     serviceAddress + "/heartbeat",
+		ServiceUpdateURL: serviceAddr + "/services",
+		HeartBeatURL:     serviceAddr + "/heartbeat",
 	}
-
-	ctx, err := service.Start(
-		context.Background(),
+	ctx, err := service.Start(context.Background(),
 		host,
 		port,
 		r,
-		portal.RegisterHandlers,
-	)
+		portal.RegisterHandlers)
 	if err != nil {
-		stlog.Fatal(err)
+		stlog.Fatalln(err)
 	}
 	if logProvider, err := registry.GetProvider(registry.LogService); err != nil {
 		log.SetClientLogger(logProvider, r.ServiceName)
 	}
+	//start 中使用了goroutine，会发送响应的信号
 	<-ctx.Done()
-	fmt.Println("shutting down portal")
-
+	fmt.Println("Shutting down portal.")
 }

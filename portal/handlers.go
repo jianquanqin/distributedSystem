@@ -2,10 +2,10 @@ package portal
 
 import (
 	"bytes"
-	"distributedSystem/grades"
-	"distributedSystem/registry"
 	"encoding/json"
 	"fmt"
+	"go-distributed-system/grades"
+	"go-distributed-system/registry"
 	"log"
 	"net/http"
 	"strconv"

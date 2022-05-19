@@ -11,50 +11,65 @@ import (
 )
 
 func RegisterHandlers() {
-	handler := new(studentsHandler)
+	handler := new(studentHandler)
 	http.Handle("/students", handler)
 	http.Handle("/students/", handler)
+
 }
 
-type studentsHandler struct{}
+type studentHandler struct{}
 
-func (sh studentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+func (sh studentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	//对路径分割
 	pathSegments := strings.Split(r.URL.Path, "/")
 	switch len(pathSegments) {
 	case 2:
-		sh.getAll(w, r)
+		sh.GetAll(w, r)
 	case 3:
 		id, err := strconv.Atoi(pathSegments[2])
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		sh.getOne(w, r, id)
+		sh.GetOne(w, r, id)
 	case 4:
 		id, err := strconv.Atoi(pathSegments[2])
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		sh.addGrade(w, r, id)
+		sh.AddGrade(w, r, id)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
-func (sh studentsHandler) getAll(w http.ResponseWriter, r *http.Request) {
+
+func (sh studentHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	studentsMutex.Lock()
 	defer studentsMutex.Unlock()
+
 	data, err := sh.toJSON(students)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
+
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(data)
+
 }
-func (sh studentsHandler) getOne(w http.ResponseWriter, r *http.Request, id int) {
+func (sh studentHandler) toJSON(obj interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(obj)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize students: %q", err)
+	}
+	return buf.Bytes(), nil
+}
+func (sh studentHandler) GetOne(w http.ResponseWriter, r *http.Request, id int) {
 	studentsMutex.Lock()
 	defer studentsMutex.Unlock()
 
@@ -64,27 +79,18 @@ func (sh studentsHandler) getOne(w http.ResponseWriter, r *http.Request, id int)
 		log.Println(err)
 		return
 	}
+
 	data, err := sh.toJSON(student)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("failed to serialize student:%q", err)
+		log.Printf("failed to serialize students: %q", err)
 		return
 	}
+
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(data)
 }
-
-func (sh studentsHandler) toJSON(obj interface{}) ([]byte, error) {
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	err := enc.Encode(obj)
-	if err != nil {
-		return nil, fmt.Errorf("failed to serialize students: %q", err)
-	}
-	return b.Bytes(), nil
-}
-
-func (sh studentsHandler) addGrade(w http.ResponseWriter, r *http.Request, id int) {
+func (sh studentHandler) AddGrade(w http.ResponseWriter, r *http.Request, id int) {
 	studentsMutex.Lock()
 	defer studentsMutex.Unlock()
 
@@ -98,9 +104,8 @@ func (sh studentsHandler) addGrade(w http.ResponseWriter, r *http.Request, id in
 	dec := json.NewDecoder(r.Body)
 	err = dec.Decode(&g)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusCreated)
 		log.Println(err)
-		return
 	}
 	student.Grades = append(student.Grades, g)
 	w.WriteHeader(http.StatusCreated)

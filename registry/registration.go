@@ -1,7 +1,9 @@
 package registry
 
+//创建注册结构体，后续每一个服务都是它的一个实例
+
 type Registration struct {
-	ServiceName      ServiceName //can use string, but customize type be better
+	ServiceName      ServiceName
 	ServiceURL       string
 	RequiredServices []ServiceName
 	ServiceUpdateURL string
@@ -10,16 +12,22 @@ type Registration struct {
 
 type ServiceName string
 
+//将有限数量的服务名称计作常量
+
 const (
 	LogService     = ServiceName("LogService")
 	GradingService = ServiceName("GradingService")
-	PortalService  = ServiceName("Portal")
+	PortalService  = ServiceName("Portald")
 )
+
+//定义一个变量，表示服务
 
 type patchEntry struct {
 	Name ServiceName
 	URL  string
 }
+
+//再定义一个变量，表示服务的增减情况
 
 type patch struct {
 	Added   []patchEntry
