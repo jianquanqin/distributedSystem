@@ -5,12 +5,12 @@ import (
 	"sync"
 )
 
-type Student struct {
-	ID        int
-	FirstName string
-	LastName  string
-	Grades    []Grade
-}
+// type Student struct {
+// 	ID        int
+// 	FirstName string
+// 	LastName  string
+// 	Grades    []Grade
+// }
 
 func (s Student) Average() float32 {
 	var result float32
@@ -21,7 +21,7 @@ func (s Student) Average() float32 {
 	return result / float32(len(s.Grades))
 }
 
-type Students []Student
+// type Students []Student
 
 var (
 	students      Students
